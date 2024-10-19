@@ -3,15 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ポップアップ例</title>
-    <script>
-        window.onload = function() {
-            alert("画面が表示されました！");
-        };
-    </script>
+    <title>タスク管理アプリ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        input[type="text"] {
+            width: 70%;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #f4f4f4;
+            border-radius: 5px;
+        }
+
+        li.completed {
+            text-decoration: line-through;
+            background-color: #d1ffd1;
+        }
+
+        button.complete-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button.delete-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <h1>ポップアップ表示の例</h1>
-    <p>ページが読み込まれると自動的にポップアップが表示されます。</p>
+
+    <h1>タスク管理アプリ</h1>
+
+    <div>
+        <input type="text" id="taskInput" placeholder="タスクを入力">
+        <button id="addTaskBtn">タスクを追加</button>
+    </div>
+
+    <ul id="taskList"></ul>
+
+    <script>
+        const taskInput = document.getElementById('taskInput');
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        const taskList = document.getElementById('taskList');
+
+        // ローカルストレージからタスクをロード
+        document.addEventListener('DOMContentLoaded', loadTasks);
+
+        // タスク追加ボタンのクリックイベント
+        addTaskBtn.addEventListener('click', addTask);
+
+        function addTask() {
+            const taskText = taskInput.value.trim();
+            if (taskText === "") {
+                alert("タスクを入力してください。");
+                return;
+            }
+
+            // タスクを作成
+            const task = {
+                text: taskText,
+                completed: false
+            };
+
+            // タスクをリストに追加
+            addTaskToList(task);
+
+            // タスクをローカルストレージに保存
+            saveTask(task);
+
+            // テキストボックスをクリア
+            taskInput.value = "";
+        }
+
+        // タスクをリストに表示
+        function addTaskToList(task) {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span>${task.text}</span>
+                <div>
+                    <button class="complete-btn">${task.completed ? '未完了にする' : '完了にする'}</button>
+                    <button class="delete-btn">削除</button>
+                </div>
+            `;
+            li.classList.toggle('completed', task.completed);
+
+            // 完了/未完了ボタンのイベントリスナー
+            li.querySelector('.complete-btn').addEventListener('click', () => {
+                task.completed = !task.completed;
+                li.classList.toggle('completed', task.completed);
+                li.querySelector('.complete-btn').textContent = task.completed ? '未完了にする' : '完了にする';
+                updateTaskInStorage(task);
+            });
+
+            // 削除ボタンのイベントリスナー
+            li.querySelector('.delete-btn').addEventListener('click', () => {
+                taskList.removeChild(li);
+                removeTaskFromStorage(task);
+            });
+
+            taskList.appendChild(li);
+        }
+
+        // ローカルストレージにタスクを保存
+        function saveTask(task) {
+            const tasks = getTasksFromStorage();
+            tasks.push(task);
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        // ローカルストレージからタスクを取得
+        function getTasksFromStorage() {
+            return JSON.parse(localStorage.getItem('tasks')) || [];
+        }
+
+        // ローカルストレージに保存されたタスクをロード
+        function loadTasks() {
+            const tasks = getTasksFromStorage();
+            tasks.forEach(task => addTaskToList(task));
+        }
+
+        // ローカルストレージ内のタスクを更新
+        function updateTaskInStorage(updatedTask) {
+            const tasks = getTasksFromStorage();
+            const updatedTasks = tasks.map(task =>
+                task.text === updatedTask.text ? updatedTask : task
+            );
+            localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+        }
+
+        // ローカルストレージからタスクを削除
+        function removeTaskFromStorage(taskToRemove) {
+            const tasks = getTasksFromStorage();
+            const filteredTasks = tasks.filter(task => task.text !== taskToRemove.text);
+            localStorage.setItem('tasks', JSON.stringify(filteredTasks));
+        }
+    </script>
+
 </body>
 </html>
